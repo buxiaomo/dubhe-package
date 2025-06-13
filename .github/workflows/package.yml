@@ -79,9 +79,9 @@ jobs:
           docker rmi docker.io/goharbor/harbor-db:v2.12.0 127.0.0.1:5000/goharbor/harbor-db:v2.12.0
 
           docker pull docker.io/goharbor/trivy-adapter-photon:v2.12.0
-          docker tag docker.io/goharbor/trivy-adapter-photon:v2.12.0 127.0.0.1:5000/goharbor/adapter-photon:v2.12.0
-          docker push 127.0.0.1:5000/goharbor/adapter-photon:v2.12.0
-          docker rmi docker.io/goharbor/trivy-adapter-photon:v2.12.0 127.0.0.1:5000/goharbor/adapter-photon:v2.12.0
+          docker tag docker.io/goharbor/trivy-adapter-photon:v2.12.0 127.0.0.1:5000/goharbor/trivy-adapter-photon:v2.12.0
+          docker push 127.0.0.1:5000/goharbor/trivy-adapter-photon:v2.12.0
+          docker rmi docker.io/goharbor/trivy-adapter-photon:v2.12.0 127.0.0.1:5000/goharbor/trivy-adapter-photon:v2.12.0
 
           docker pull docker.io/goharbor/registry-photon:v2.12.0
           docker tag docker.io/goharbor/registry-photon:v2.12.0 127.0.0.1:5000/goharbor/registry-photon:v2.12.0
