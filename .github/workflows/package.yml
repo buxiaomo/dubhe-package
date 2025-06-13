@@ -199,11 +199,6 @@ jobs:
           docker push 127.0.0.1:5000/library/mysql:5.7
           docker rmi docker.io/library/mysql:5.7 127.0.0.1:5000/library/mysql:5.7
 
-          docker pull docker.io/library/ubuntu:20.04
-          docker tag docker.io/library/ubuntu:20.04 127.0.0.1:5000/library/ubuntu:20.04
-          docker push 127.0.0.1:5000/library/ubuntu:20.04
-          docker rmi docker.io/library/ubuntu:20.04 127.0.0.1:5000/library/ubuntu:20.04
-
           docker pull docker.io/dcm4che/slapd-dcm4chee:2.4.44-12.0
           docker tag docker.io/dcm4che/slapd-dcm4chee:2.4.44-12.0 127.0.0.1:5000/dcm4che/slapd-dcm4chee:2.4.44-12.0
           docker push 127.0.0.1:5000/dcm4che/slapd-dcm4chee:2.4.44-12.0
@@ -263,6 +258,11 @@ jobs:
           # docker tag registry.cn-hangzhou.aliyuncs.com/enlin/notebook:v1 127.0.0.1:5000/enlin/notebook:v1
           # docker push 127.0.0.1:5000/enlin/notebook:v1
           # docker rmi registry.cn-hangzhou.aliyuncs.com/enlin/notebook:v1 127.0.0.1:5000/enlin/notebook:v1
+
+          # docker pull docker.io/library/ubuntu:20.04
+          # docker tag docker.io/library/ubuntu:20.04 127.0.0.1:5000/library/ubuntu:20.04
+          # docker push 127.0.0.1:5000/library/ubuntu:20.04
+          # docker rmi docker.io/library/ubuntu:20.04 127.0.0.1:5000/library/ubuntu:20.04
 
       - name: docker images
         run: |
@@ -352,6 +352,7 @@ jobs:
           asset_path: /mnt/registry.tar.gz.01
           asset_name: registry.tar.gz.01
           asset_content_type: application/gzip
+
       - name: Upload registry[02] Asset
         uses: actions/upload-release-asset@v1
         env:
@@ -361,6 +362,7 @@ jobs:
           asset_path: /mnt/registry.tar.gz.02
           asset_name: registry.tar.gz.02
           asset_content_type: application/gzip
+
       - name: Upload registry[03] Asset
         uses: actions/upload-release-asset@v1
         env:
@@ -370,6 +372,7 @@ jobs:
           asset_path: /mnt/registry.tar.gz.03
           asset_name: registry.tar.gz.03
           asset_content_type: application/gzip
+
       - name: Upload registry[04] Asset
         uses: actions/upload-release-asset@v1
         env:
@@ -379,6 +382,7 @@ jobs:
           asset_path: /mnt/registry.tar.gz.04
           asset_name: registry.tar.gz.04
           asset_content_type: application/gzip
+
       - name: Upload registry[05] Asset
         uses: actions/upload-release-asset@v1
         env:
@@ -388,6 +392,7 @@ jobs:
           asset_path: /mnt/registry.tar.gz.05
           asset_name: registry.tar.gz.05
           asset_content_type: application/gzip
+
       - name: Upload registry[06] Asset
         uses: actions/upload-release-asset@v1
         env:
@@ -397,6 +402,7 @@ jobs:
           asset_path: /mnt/registry.tar.gz.06
           asset_name: registry.tar.gz.06
           asset_content_type: application/gzip
+
       - name: Upload registry[07] Asset
         uses: actions/upload-release-asset@v1
         env:
@@ -406,6 +412,7 @@ jobs:
           asset_path: /mnt/registry.tar.gz.07
           asset_name: registry.tar.gz.07
           asset_content_type: application/gzip
+
       - name: Upload registry[08] Asset
         uses: actions/upload-release-asset@v1
         env:
@@ -415,6 +422,7 @@ jobs:
           asset_path: /mnt/registry.tar.gz.08
           asset_name: registry.tar.gz.08
           asset_content_type: application/gzip
+
       - name: Upload registry[09] Asset
         uses: actions/upload-release-asset@v1
         env:
@@ -424,6 +432,7 @@ jobs:
           asset_path: /mnt/registry.tar.gz.09
           asset_name: registry.tar.gz.09
           asset_content_type: application/gzip
+
       - name: Upload registry[10] Asset
         uses: actions/upload-release-asset@v1
         env:
@@ -432,50 +441,4 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: /mnt/registry.tar.gz.10
           asset_name: registry.tar.gz.10
-          asset_content_type: application/gzip
-      - name: Upload registry[11] Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: /mnt/registry.tar.gz.11
-          asset_name: registry.tar.gz.11
-          asset_content_type: application/gzip
-      - name: Upload registry[12] Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: /mnt/registry.tar.gz.12
-          asset_name: registry.tar.gz.12
-          asset_content_type: application/gzip
-      - name: Upload registry[13] Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: /mnt/registry.tar.gz.13
-          asset_name: registry.tar.gz.13
-          asset_content_type: application/gzip
-      - name: Upload registry[14] Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: /mnt/registry.tar.gz.14
-          asset_name: registry.tar.gz.14
-          asset_content_type: application/gzip
-
-      - name: Upload registry[15] Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: /mnt/registry.tar.gz.15
-          asset_name: registry.tar.gz.15
           asset_content_type: application/gzip
