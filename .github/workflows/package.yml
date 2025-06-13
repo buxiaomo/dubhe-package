@@ -1,0 +1,481 @@
+name: dubhe package
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@master
+        with:
+          fetch-depth: 0
+
+      - name: init environment
+        run: |
+          set -x
+          cat /etc/fstab
+          df -h /mnt
+          ls -l /mnt
+          sudo swapoff -a
+          sudo rm -rf /mnt/swapfile
+          sudo mkdir -p /mnt/registry
+          docker rm -f registry >/dev/null 2>&1 || true
+          docker run -d --name registry \
+          -p 5000:5000 --restart always \
+          -v /mnt/registry:/var/lib/registry \
+          registry:2.8.1
+
+      - name: helm package
+        run: |
+          set -x
+          curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+          helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+          helm pull nfs-subdir-external-provisioner/nfs-subdir-external-provisioner --version 4.0.18
+          docker pull registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2
+          docker tag registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2 127.0.0.1:5000/sig-storage/nfs-subdir-external-provisioner:v4.0.2
+          docker push 127.0.0.1:5000/sig-storage/nfs-subdir-external-provisioner:v4.0.2
+          docker rmi registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2 127.0.0.1:5000/sig-storage/nfs-subdir-external-provisioner:v4.0.2
+
+
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm pull prometheus-community/kube-state-metrics --version 4.0.1
+          docker pull k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.2.0
+          docker tag k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.2.0 127.0.0.1:5000/kube-state-metrics/kube-state-metrics:v2.2.0
+          docker push 127.0.0.1:5000/kube-state-metrics/kube-state-metrics:v2.2.0
+          docker rmi k8s.gcr.io/kube-state-metrics/kube-state-metrics:v2.2.0 127.0.0.1:5000/kube-state-metrics/kube-state-metrics:v2.2.0
+
+          helm repo add traefik https://traefik.github.io/charts
+          helm pull traefik/traefik --version 26.1.0
+          docker pull docker.io/library/traefik:v2.11.0
+          docker tag docker.io/library/traefik:v2.11.0 127.0.0.1:5000/library/traefik:v2.11.0
+          docker push 127.0.0.1:5000/library/traefik:v2.11.0
+          docker rmi docker.io/library/traefik:v2.11.0 127.0.0.1:5000/library/traefik:v2.11.0
+
+          helm repo add harbor https://helm.goharbor.io
+          helm repo update
+          helm pull harbor/harbor --version 1.14.3
+          docker pull docker.io/goharbor/harbor-exporter:v2.12.0
+          docker tag docker.io/goharbor/harbor-exporter:v2.12.0 127.0.0.1:5000/goharbor/harbor-exporter:v2.12.0
+          docker push 127.0.0.1:5000/goharbor/harbor-exporter:v2.12.0
+          docker rmi docker.io/goharbor/harbor-exporter:v2.12.0 127.0.0.1:5000/goharbor/harbor-exporter:v2.12.0
+
+
+          docker pull docker.io/goharbor/redis-photon:v2.12.0
+          docker tag docker.io/goharbor/redis-photon:v2.12.0 127.0.0.1:5000/goharbor/redis-photon:v2.12.0
+          docker push 127.0.0.1:5000/goharbor/redis-photon:v2.12.0
+          docker rmi docker.io/goharbor/redis-photon:v2.12.0 127.0.0.1:5000/goharbor/redis-photon:v2.12.0
+
+          docker pull docker.io/goharbor/harbor-db:v2.12.0
+          docker tag docker.io/goharbor/harbor-db:v2.12.0 127.0.0.1:5000/goharbor/harbor-db:v2.12.0
+          docker push 127.0.0.1:5000/goharbor/harbor-db:v2.12.0
+          docker rmi docker.io/goharbor/harbor-db:v2.12.0 127.0.0.1:5000/goharbor/harbor-db:v2.12.0
+
+          docker pull docker.io/goharbor/trivy-adapter-photon:v2.12.0
+          docker tag docker.io/goharbor/trivy-adapter-photon:v2.12.0 127.0.0.1:5000/goharbor/adapter-photon:v2.12.0
+          docker push 127.0.0.1:5000/goharbor/adapter-photon:v2.12.0
+          docker rmi docker.io/goharbor/trivy-adapter-photon:v2.12.0 127.0.0.1:5000/goharbor/adapter-photon:v2.12.0
+
+          docker pull docker.io/goharbor/registry-photon:v2.12.0
+          docker tag docker.io/goharbor/registry-photon:v2.12.0 127.0.0.1:5000/goharbor/registry-photon:v2.12.0
+          docker push 127.0.0.1:5000/goharbor/registry-photon:v2.12.0
+          docker rmi docker.io/goharbor/registry-photon:v2.12.0 127.0.0.1:5000/goharbor/registry-photon:v2.12.0
+
+          docker pull docker.io/goharbor/harbor-registryctl:v2.12.0
+          docker tag docker.io/goharbor/harbor-registryctl:v2.12.0 127.0.0.1:5000/goharbor/harbor-registryctl:v2.12.0
+          docker push 127.0.0.1:5000/goharbor/harbor-registryctl:v2.12.0
+          docker rmi docker.io/goharbor/harbor-registryctl:v2.12.0 127.0.0.1:5000/goharbor/harbor-registryctl:v2.12.0
+
+          docker pull docker.io/goharbor/harbor-jobservice:v2.12.0
+          docker tag docker.io/goharbor/harbor-jobservice:v2.12.0 127.0.0.1:5000/goharbor/harbor-jobservice:v2.12.0
+          docker push 127.0.0.1:5000/goharbor/harbor-jobservice:v2.12.0
+          docker rmi docker.io/goharbor/harbor-jobservice:v2.12.0 127.0.0.1:5000/goharbor/harbor-jobservice:v2.12.0
+
+          docker pull docker.io/goharbor/harbor-core:v2.12.0
+          docker tag docker.io/goharbor/harbor-core:v2.12.0 127.0.0.1:5000/goharbor/harbor-core:v2.12.0
+          docker push 127.0.0.1:5000/goharbor/harbor-core:v2.12.0
+          docker rmi docker.io/goharbor/harbor-core:v2.12.0 127.0.0.1:5000/goharbor/harbor-core:v2.12.0
+
+          docker pull docker.io/goharbor/harbor-portal:v2.12.0
+          docker tag docker.io/goharbor/harbor-portal:v2.12.0 127.0.0.1:5000/goharbor/harbor-portal:v2.12.0
+          docker push 127.0.0.1:5000/goharbor/harbor-portal:v2.12.0
+          docker rmi docker.io/goharbor/harbor-portal:v2.12.0 127.0.0.1:5000/goharbor/harbor-portal:v2.12.0
+
+          docker pull docker.io/goharbor/nginx-photon:v2.12.0
+          docker tag docker.io/goharbor/nginx-photon:v2.12.0 127.0.0.1:5000/goharbor/nginx-photon:v2.12.0
+          docker push 127.0.0.1:5000/goharbor/nginx-photon:v2.12.0
+          docker rmi docker.io/goharbor/nginx-photon:v2.12.0 127.0.0.1:5000/goharbor/nginx-photon:v2.12.0
+
+          sudo mkdir -p /mnt/dubhe/helm
+          sudo mv *.tgz /mnt/dubhe/helm/
+          sudo wget https://get.helm.sh/helm-v3.18.2-linux-amd64.tar.gz -O /mnt/dubhe/helm/helm-v3.18.2-linux-amd64.tar.gz
+          ls -l /mnt/dubhe/helm
+          df -h
+          echo "Helm charts downloaded successfully."
+          echo "Helm charts are ready in /mnt/dubhe/helm."
+
+      - name: dubhe image
+        run: |
+          set -x
+          docker pull docker.io/minio/minio:RELEASE.2020-04-28T23-56-56Z
+          docker tag docker.io/minio/minio:RELEASE.2020-04-28T23-56-56Z 127.0.0.1:5000/minio/minio:RELEASE.2020-04-28T23-56-56Z
+          docker push 127.0.0.1:5000/minio/minio:RELEASE.2020-04-28T23-56-56Z
+          docker rmi docker.io/minio/minio:RELEASE.2020-04-28T23-56-56Z 127.0.0.1:5000/minio/minio:RELEASE.2020-04-28T23-56-56Z
+
+          docker pull docker.io/nacos/nacos-mysql:5.7
+          docker tag docker.io/nacos/nacos-mysql:5.7 127.0.0.1:5000/nacos/nacos-mysql:5.7
+          docker push 127.0.0.1:5000/nacos/nacos-mysql:5.7
+          docker rmi docker.io/nacos/nacos-mysql:5.7 127.0.0.1:5000/nacos/nacos-mysql:5.7
+
+          docker pull docker.io/nacos/nacos-server:2.0.3
+          docker tag docker.io/nacos/nacos-server:2.0.3 127.0.0.1:5000/nacos/nacos-server:2.0.3
+          docker push 127.0.0.1:5000/nacos/nacos-server:2.0.3
+          docker rmi docker.io/nacos/nacos-server:2.0.3 127.0.0.1:5000/nacos/nacos-server:2.0.3
+
+          docker pull docker.io/library/redis:5.0.7
+          docker tag docker.io/library/redis:5.0.7 127.0.0.1:5000/library/redis:5.0.7
+          docker push 127.0.0.1:5000/library/redis:5.0.7
+          docker rmi docker.io/library/redis:5.0.7 127.0.0.1:5000/library/redis:5.0.7
+
+          docker pull docker.io/library/alpine:3.6
+          docker tag docker.io/library/alpine:3.6 127.0.0.1:5000/library/alpine:3.6
+          docker push 127.0.0.1:5000/library/alpine:3.6
+          docker rmi docker.io/library/alpine:3.6 127.0.0.1:5000/library/alpine:3.6
+
+          docker pull docker.elastic.co/kibana/kibana:7.17.16
+          docker tag docker.elastic.co/kibana/kibana:7.17.16 127.0.0.1:5000/kibana/kibana:7.17.16
+          docker push 127.0.0.1:5000/kibana/kibana:7.17.16
+          docker rmi docker.elastic.co/kibana/kibana:7.17.16 127.0.0.1:5000/kibana/kibana:7.17.16
+
+          docker pull docker.elastic.co/elasticsearch/elasticsearch:7.17.16
+          docker tag docker.elastic.co/elasticsearch/elasticsearch:7.17.16 127.0.0.1:5000/elasticsearch/elasticsearch:7.17.16
+          docker push 127.0.0.1:5000/elasticsearch/elasticsearch:7.17.16
+          docker rmi docker.elastic.co/elasticsearch/elasticsearch:7.17.16 127.0.0.1:5000/elasticsearch/elasticsearch:7.17.16
+
+          docker pull docker.io/fluent/fluent-bit:2.2.0
+          docker tag docker.io/fluent/fluent-bit:2.2.0 127.0.0.1:5000/fluent/fluent-bit:2.2.0
+          docker push 127.0.0.1:5000/fluent/fluent-bit:2.2.0
+          docker rmi docker.io/fluent/fluent-bit:2.2.0 127.0.0.1:5000/fluent/fluent-bit:2.2.0
+
+          docker pull docker.io/prom/node-exporter:v1.7.0
+          docker tag docker.io/prom/node-exporter:v1.7.0 127.0.0.1:5000/prom/node-exporter:v1.7.0
+          docker push 127.0.0.1:5000/prom/node-exporter:v1.7.0
+          docker rmi docker.io/prom/node-exporter:v1.7.0 127.0.0.1:5000/prom/node-exporter:v1.7.0
+
+          docker pull docker.io/prom/prometheus:v2.54.1
+          docker tag docker.io/prom/prometheus:v2.54.1 127.0.0.1:5000/prom/prometheus:v2.54.1
+          docker push 127.0.0.1:5000/prom/prometheus:v2.54.1
+          docker rmi docker.io/prom/prometheus:v2.54.1 127.0.0.1:5000/prom/prometheus:v2.54.1
+
+          docker pull docker.io/grafana/grafana:11.1.4
+          docker tag docker.io/grafana/grafana:11.1.4 127.0.0.1:5000/grafana/grafana:11.1.4
+          docker push 127.0.0.1:5000/grafana/grafana:11.1.4
+          docker rmi docker.io/grafana/grafana:11.1.4 127.0.0.1:5000/grafana/grafana:11.1.4
+
+          docker pull docker.io/library/nginx:1.20.0
+          docker tag docker.io/library/nginx:1.20.0 127.0.0.1:5000/library/nginx:1.20.0
+          docker push 127.0.0.1:5000/library/nginx:1.20.0
+          docker rmi docker.io/library/nginx:1.20.0 127.0.0.1:5000/library/nginx:1.20.0
+
+          docker pull docker.io/library/node:12.22.4
+          docker tag docker.io/library/node:12.22.4 127.0.0.1:5000/library/node:12.22.4
+          docker push 127.0.0.1:5000/library/node:12.22.4
+          docker rmi docker.io/library/node:12.22.4 127.0.0.1:5000/library/node:12.22.4
+
+          docker pull docker.io/buxiaomo/curl:latest
+          docker tag docker.io/buxiaomo/curl:latest 127.0.0.1:5000/buxiaomo/curl:latest
+          docker push 127.0.0.1:5000/buxiaomo/curl:latest
+          docker rmi docker.io/buxiaomo/curl:latest 127.0.0.1:5000/buxiaomo/curl:latest
+
+          docker pull docker.io/library/mysql:5.7
+          docker tag docker.io/library/mysql:5.7 127.0.0.1:5000/library/mysql:5.7
+          docker push 127.0.0.1:5000/library/mysql:5.7
+          docker rmi docker.io/library/mysql:5.7 127.0.0.1:5000/library/mysql:5.7
+
+          docker pull docker.io/library/ubuntu:20.04
+          docker tag docker.io/library/ubuntu:20.04 127.0.0.1:5000/library/ubuntu:20.04
+          docker push 127.0.0.1:5000/library/ubuntu:20.04
+          docker rmi docker.io/library/ubuntu:20.04 127.0.0.1:5000/library/ubuntu:20.04
+
+          docker pull docker.io/dcm4che/slapd-dcm4chee:2.4.44-12.0
+          docker tag docker.io/dcm4che/slapd-dcm4chee:2.4.44-12.0 127.0.0.1:5000/dcm4che/slapd-dcm4chee:2.4.44-12.0
+          docker push 127.0.0.1:5000/dcm4che/slapd-dcm4chee:2.4.44-12.0
+          docker rmi docker.io/dcm4che/slapd-dcm4chee:2.4.44-12.0 127.0.0.1:5000/dcm4che/slapd-dcm4chee:2.4.44-12.0
+
+          docker pull docker.io/dcm4che/postgres-dcm4chee:10.0-12
+          docker tag docker.io/dcm4che/postgres-dcm4chee:10.0-12 127.0.0.1:5000/dcm4che/postgres-dcm4chee:10.0-12
+          docker push 127.0.0.1:5000/dcm4che/postgres-dcm4chee:10.0-12
+          docker rmi docker.io/dcm4che/postgres-dcm4chee:10.0-12 127.0.0.1:5000/dcm4che/postgres-dcm4chee:10.0-12
+
+          docker pull docker.io/dcm4che/dcm4chee-arc-psql:5.12.0
+          docker tag docker.io/dcm4che/dcm4chee-arc-psql:5.12.0 127.0.0.1:5000/dcm4che/dcm4chee-arc-psql:5.12.0
+          docker push 127.0.0.1:5000/dcm4che/dcm4chee-arc-psql:5.12.0
+          docker rmi docker.io/dcm4che/dcm4chee-arc-psql:5.12.0 127.0.0.1:5000/dcm4che/dcm4chee-arc-psql:5.12.0
+
+          docker pull registry.cn-hangzhou.aliyuncs.com/enlin/imgprocess:v1
+          docker tag registry.cn-hangzhou.aliyuncs.com/enlin/imgprocess:v1 127.0.0.1:5000/enlin/imgprocess:v1
+          docker push 127.0.0.1:5000/enlin/imgprocess:v1
+          docker rmi registry.cn-hangzhou.aliyuncs.com/enlin/imgprocess:v1 127.0.0.1:5000/enlin/imgprocess:v1
+
+          docker pull registry.cn-hangzhou.aliyuncs.com/enlin/ofrecord:v1
+          docker tag registry.cn-hangzhou.aliyuncs.com/enlin/ofrecord:v1 127.0.0.1:5000/enlin/ofrecord:v1
+          docker push 127.0.0.1:5000/enlin/ofrecord:v1
+          docker rmi registry.cn-hangzhou.aliyuncs.com/enlin/ofrecord:v1 127.0.0.1:5000/enlin/ofrecord:v1
+
+          docker pull registry.cn-hangzhou.aliyuncs.com/enlin/videosample:v1
+          docker tag registry.cn-hangzhou.aliyuncs.com/enlin/videosample:v1 127.0.0.1:5000/enlin/videosample:v1
+          docker push 127.0.0.1:5000/enlin/videosample:v1
+          docker rmi registry.cn-hangzhou.aliyuncs.com/enlin/videosample:v1 127.0.0.1:5000/enlin/videosample:v1
+
+          docker pull registry.cn-hangzhou.aliyuncs.com/enlin/dubhe-java:v1
+          docker tag registry.cn-hangzhou.aliyuncs.com/enlin/dubhe-java:v1 127.0.0.1:5000/enlin/dubhe-java:v1
+          docker push 127.0.0.1:5000/enlin/dubhe-java:v1
+          docker rmi registry.cn-hangzhou.aliyuncs.com/enlin/dubhe-java:v1 127.0.0.1:5000/enlin/dubhe-java:v1
+
+          docker pull registry.cn-hangzhou.aliyuncs.com/enlin/visual-server:v1
+          docker tag registry.cn-hangzhou.aliyuncs.com/enlin/visual-server:v1 127.0.0.1:5000/enlin/visual-server:v1
+          docker push 127.0.0.1:5000/enlin/visual-server:v1
+          docker rmi registry.cn-hangzhou.aliyuncs.com/enlin/visual-server:v1 127.0.0.1:5000/enlin/visual-server:v1
+
+          docker pull registry.cn-hangzhou.aliyuncs.com/enlin/model-converter:v1
+          docker tag registry.cn-hangzhou.aliyuncs.com/enlin/model-converter:v1 127.0.0.1:5000/enlin/model-converter:v1
+          docker push 127.0.0.1:5000/enlin/model-converter:v1
+          docker rmi registry.cn-hangzhou.aliyuncs.com/enlin/model-converter:v1 127.0.0.1:5000/enlin/model-converter:v1
+
+          docker pull registry.cn-hangzhou.aliyuncs.com/enlin/model-measuring:v1
+          docker tag registry.cn-hangzhou.aliyuncs.com/enlin/model-measuring:v1 127.0.0.1:5000/enlin/model-measuring:v1
+          docker push 127.0.0.1:5000/enlin/model-measuring:v1
+          docker rmi registry.cn-hangzhou.aliyuncs.com/enlin/model-measuring:v1 127.0.0.1:5000/enlin/model-measuring:v1
+
+          docker pull registry.cn-hangzhou.aliyuncs.com/enlin/storage-init:v1
+          docker tag registry.cn-hangzhou.aliyuncs.com/enlin/storage-init:v1 127.0.0.1:5000/enlin/storage-init:v1
+          docker push 127.0.0.1:5000/enlin/storage-init:v1
+          docker rmi registry.cn-hangzhou.aliyuncs.com/enlin/storage-init:v1 127.0.0.1:5000/enlin/storage-init:v1
+
+          # docker pull registry.cn-hangzhou.aliyuncs.com/enlin/notebook:v1
+          # docker tag registry.cn-hangzhou.aliyuncs.com/enlin/notebook:v1 127.0.0.1:5000/enlin/notebook:v1
+          # docker push 127.0.0.1:5000/enlin/notebook:v1
+          # docker rmi registry.cn-hangzhou.aliyuncs.com/enlin/notebook:v1 127.0.0.1:5000/enlin/notebook:v1
+
+      - name: docker images
+        run: |
+          set -x
+          pushd /mnt
+          sudo tar -zc ./registry | split -b 2000M -d -a 2 - /mnt/registry.tar.gz.
+          ls -lh
+          popd
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+
+      - name: Upload harbor Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/dubhe/helm/harbor-1.14.3.tgz
+          asset_name: harbor-1.14.3.tgz
+          asset_content_type: application/gzip
+
+      - name: Upload kube-state-metrics Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/dubhe/helm/kube-state-metrics-4.0.1.tgz
+          asset_name: kube-state-metrics-4.0.1.tgz
+          asset_content_type: application/gzip
+          
+      - name: Upload nfs-subdir-external-provisioner Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/dubhe/helm/nfs-subdir-external-provisioner-4.0.18.tgz
+          asset_name: nfs-subdir-external-provisioner-4.0.18.tgz
+          asset_content_type: application/gzip
+
+      - name: Upload nfs-subdir-external-provisioner Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/dubhe/helm/traefik-26.1.0.tgz
+          asset_name: traefik-26.1.0.tgz 
+          asset_content_type: application/gzip
+
+      - name: Upload helm Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/dubhe/helm/helm-v3.18.2-linux-amd64.tar.gz
+          asset_name: helm-v3.18.2-linux-amd64.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload registry[00] Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/registry.tar.gz.00
+          asset_name: registry.tar.gz.00
+          asset_content_type: application/gzip
+
+      - name: Upload registry[01] Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/registry.tar.gz.01
+          asset_name: registry.tar.gz.01
+          asset_content_type: application/gzip
+      - name: Upload registry[02] Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/registry.tar.gz.02
+          asset_name: registry.tar.gz.02
+          asset_content_type: application/gzip
+      - name: Upload registry[03] Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/registry.tar.gz.03
+          asset_name: registry.tar.gz.03
+          asset_content_type: application/gzip
+      - name: Upload registry[04] Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/registry.tar.gz.04
+          asset_name: registry.tar.gz.04
+          asset_content_type: application/gzip
+      - name: Upload registry[05] Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/registry.tar.gz.05
+          asset_name: registry.tar.gz.05
+          asset_content_type: application/gzip
+      - name: Upload registry[06] Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/registry.tar.gz.06
+          asset_name: registry.tar.gz.06
+          asset_content_type: application/gzip
+      - name: Upload registry[07] Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/registry.tar.gz.07
+          asset_name: registry.tar.gz.07
+          asset_content_type: application/gzip
+      - name: Upload registry[08] Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/registry.tar.gz.08
+          asset_name: registry.tar.gz.08
+          asset_content_type: application/gzip
+      - name: Upload registry[09] Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/registry.tar.gz.09
+          asset_name: registry.tar.gz.09
+          asset_content_type: application/gzip
+      - name: Upload registry[10] Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/registry.tar.gz.10
+          asset_name: registry.tar.gz.10
+          asset_content_type: application/gzip
+      - name: Upload registry[11] Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/registry.tar.gz.11
+          asset_name: registry.tar.gz.11
+          asset_content_type: application/gzip
+      - name: Upload registry[12] Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/registry.tar.gz.12
+          asset_name: registry.tar.gz.12
+          asset_content_type: application/gzip
+      - name: Upload registry[13] Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/registry.tar.gz.13
+          asset_name: registry.tar.gz.13
+          asset_content_type: application/gzip
+      - name: Upload registry[14] Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/registry.tar.gz.14
+          asset_name: registry.tar.gz.14
+          asset_content_type: application/gzip
+
+      - name: Upload registry[15] Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: /mnt/registry.tar.gz.15
+          asset_name: registry.tar.gz.15
+          asset_content_type: application/gzip
