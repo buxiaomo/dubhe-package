@@ -268,7 +268,7 @@ jobs:
         run: |
           set -x
           pushd /mnt
-          sudo tar -zc ./registry | split -b 2000M -d -a 2 - /mnt/registry.tar.gz.
+          sudo tar -zc ./registry | sudo split -b 2000M -d -a 2 - /mnt/registry.tar.gz.
           ls -lh
           popd
 
